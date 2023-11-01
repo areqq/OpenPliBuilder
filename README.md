@@ -35,7 +35,9 @@ bitbake -k git
 
 # Links
 https://wiki.openpli.org/Information_for_Developers#Create_your_own_build
+
 https://forums.openpli.org/topic/45586-building-openpli-using-a-docker-image/
+
 https://github.com/technic/e2xvfb
 
 
