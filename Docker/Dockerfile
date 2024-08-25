@@ -13,7 +13,7 @@ RUN \
         sed wget cvs subversion git-core \
         coreutils unzip texi2html texinfo docbook-utils sudo file \
         gawk python3-distutils diffstat help2man make gcc build-essential g++ libproc-processtable-perl \
-        chrpath gettext zip libssl-dev cpio default-jre ca-certificates locales && \
+        chrpath gettext zip libssl-dev cpio default-jre ca-certificates locales mc vim terminfo curl && \
     apt -y autoremove   && \
     apt -y autoclean    && \
     rm -Rf /var/cache/apt/archives/* && \
