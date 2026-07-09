@@ -1,0 +1,2 @@
+# local OpenPLi build tree (cloned + built inside the container, mounted here)
+/build/
