@@ -1,0 +1,11 @@
+{
+  "comment": "Allow-all seccomp profile that forces a few post-5.6 syscalls to ENOSYS so old build tooling (tar/glibc) and OE's pseudo fall back to the older syscalls pseudo actually intercepts. Needed because the container shares the (very new) host kernel; without this, pseudo misses tar's openat2() dir fds and do_package fails with 'Bad address' / 'got *at() syscall for unknown directory'.",
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "syscalls": [
+    {
+      "names": ["openat2", "faccessat2", "clone3"],
+      "action": "SCMP_ACT_ERRNO",
+      "errnoRet": 38
+    }
+  ]
+}

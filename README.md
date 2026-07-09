@@ -30,17 +30,23 @@ podman build -t areqq/openplibuilder:latest Docker      # or: docker build ...
 mkdir -p build
 podman run -it --rm \
     --userns=keep-id:uid=1000,gid=1000 \
+    --security-opt seccomp=./Docker/seccomp-openpli.json \
     -v ./build:/build:Z \
     areqq/openplibuilder:latest
 ```
-`--userns=keep-id:uid=1000,gid=1000` maps your host user onto the container's
-`docker` user (uid 1000, which owns `/build`), so files created by the build
-are owned by *you* on the host and stay editable — no `root`-owned artifacts.
+- `--userns=keep-id:uid=1000,gid=1000` maps your host user onto the container's
+  `docker` user (uid 1000, which owns `/build`), so files created by the build
+  are owned by *you* on the host and stay editable — no `root`-owned artifacts.
+- `--security-opt seccomp=./Docker/seccomp-openpli.json` is **required** — see
+  the "pseudo / new host kernel" note below. Without it `do_package` fails with
+  `tar: Cannot mkdir: Bad address`.
 
 **docker:**
 ```bash
 mkdir -p build
-docker run -it --rm -v ./build:/build areqq/openplibuilder:latest
+docker run -it --rm \
+    --security-opt seccomp=./Docker/seccomp-openpli.json \
+    -v ./build:/build areqq/openplibuilder:latest
 ```
 
 ## 3. Get the sources (inside the container, in `/build`)
@@ -83,6 +89,14 @@ Handy recipe commands: `bitbake -c cleanall <pkg>`, `bitbake -c devshell <pkg>`,
   hours. A single package still needs the toolchain + its deps built once, so
   the *first* `bitbake` is long even for a small recipe. Keep everything on
   **local block storage** (OpenPLi does not support building over NFS).
+- **pseudo vs a new host kernel (the seccomp profile):** a container shares the
+  host kernel. On recent host kernels, `tar`/glibc use `openat2()`, which OE's
+  `pseudo` (its fakeroot) does not intercept — so during `do_package` pseudo
+  loses track of tar's directory fds and packaging dies with
+  `tar: Cannot mkdir: Bad address` / `got *at() syscall for unknown directory`.
+  `Docker/seccomp-openpli.json` forces `openat2`/`faccessat2`/`clone3` to return
+  `ENOSYS`, so the tooling falls back to the older syscalls pseudo does handle.
+  Always pass `--security-opt seccomp=./Docker/seccomp-openpli.json`.
 - **Never build as root** — the image already runs as the non-root `docker`
   user (bitbake refuses root). `sudo` is available inside if you need it.
 - `/bin/sh` is bash (not dash) and the locale is `en_US.UTF-8`, both required
